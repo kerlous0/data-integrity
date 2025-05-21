@@ -1,0 +1,123 @@
+{% extends "base.html" %} {% block content %}
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">All Documents</h4>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Document Name</th>
+            <th>Owner</th>
+            <th>Uploaded</th>
+            <th>Last Accessed</th>
+            <th>File Hash</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for document in documents.items %}
+          <tr>
+            <td>{{ document.original_filename }}</td>
+            <td>
+              <a href="{{ url_for('admin.user', id=document.user_id) }}">
+                {{ document.owner.username }}
+              </a>
+            </td>
+            <td>{{ document.uploaded_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>
+              {% if document.last_accessed %} {{
+              document.last_accessed.strftime('%Y-%m-%d %H:%M:%S') }} {% else %}
+              Never {% endif %}
+            </td>
+            <td>
+              <span class="text-muted" style="font-family: monospace">
+                {{ document.file_hash[:8] }}...
+              </span>
+            </td>
+            <td>
+              <div class="btn-group" role="group">
+                <a
+                  href="{{ url_for('main.download_document', id=document.id) }}"
+                  class="btn btn-sm btn-primary"
+                >
+                  <i class="fas fa-download"></i> Download
+                </a>
+                <form
+                  action="{{ url_for('main.delete_document', id=document.id) }}"
+                  method="POST"
+                  class="d-inline"
+                >
+                  <button
+                    type="submit"
+                    class="btn btn-sm btn-danger"
+                    onclick="return confirm('Are you sure you want to delete this document?')"
+                  >
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Pagination #}
+    <nav aria-label="Page navigation" class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if documents.has_prev %}
+        <li class="page-item">
+          <a
+            class="page-link"
+            href="{{ url_for('admin.documents', page=documents.prev_num) }}"
+          >
+            Previous
+          </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
+        {% endif %} {% for page_num in documents.iter_pages(left_edge=2,
+        left_current=2, right_current=3, right_edge=2) %} {% if page_num %} {%
+        if page_num == documents.page %}
+        <li class="page-item active">
+          <span class="page-link">{{ page_num }}</span>
+        </li>
+        {% else %}
+        <li class="page-item">
+          <a
+            class="page-link"
+            href="{{ url_for('admin.documents', page=page_num) }}"
+          >
+            {{ page_num }}
+          </a>
+        </li>
+        {% endif %} {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">...</span>
+        </li>
+        {% endif %} {% endfor %} {% if documents.has_next %}
+        <li class="page-item">
+          <a
+            class="page-link"
+            href="{{ url_for('admin.documents', page=documents.next_num) }}"
+          >
+            Next
+          </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %} {% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <h4 class="mb-0">My Documents</h4>
+        <a href="{{ url_for('main.upload_document') }}" class="btn btn-primary">
+          <i class="fas fa-upload"></i> Upload Document
+        </a>
+      </div>
+      <div class="card-body">
+        {% if documents %}
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Document Name</th>
+                <th>Uploaded</th>
+                <th>Last Accessed</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr>
+                <td>{{ doc.original_filename }}</td>
+                <td>{{ doc.uploaded_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>
+                  {% if doc.last_accessed %} {{
+                  doc.last_accessed.strftime('%Y-%m-%d %H:%M:%S') }} {% else %}
+                  Never {% endif %}
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <a
+                      href="{{ url_for('main.download_document', id=doc.id) }}"
+                      class="btn btn-sm btn-success"
+                    >
+                      <i class="fas fa-download"></i> Download
+                    </a>
+                    <form
+                      action="{{ url_for('main.delete_document', id=doc.id) }}"
+                      method="POST"
+                      class="d-inline"
+                      onsubmit="return confirm('Are you sure you want to delete this document?')"
+                    >
+                      <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash"></i> Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <h5>No documents yet</h5>
+          <p>Upload your first document to get started.</p>
+          <a
+            href="{{ url_for('main.upload_document') }}"
+            class="btn btn-primary"
+          >
+            <i class="fas fa-upload"></i> Upload Document
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+{% endblock %}

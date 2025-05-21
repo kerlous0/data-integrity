@@ -1,0 +1,79 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="mb-0">Set Up Two-Factor Authentication</h4>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <h5>Follow these steps to set up 2FA:</h5>
+          <ol>
+            <li>
+              Install an authenticator app on your phone (like Google
+              Authenticator, Authy, or Microsoft Authenticator)
+            </li>
+            <li>Scan the QR code below with your authenticator app</li>
+            <li>
+              Enter the 6-digit code from your authenticator app to verify setup
+            </li>
+          </ol>
+        </div>
+
+        <div class="qr-code-container text-center">
+          <img
+            src="data:image/png;base64,{{ qr_code }}"
+            alt="QR Code"
+            class="img-fluid mb-3"
+            style="max-width: 300px"
+          />
+        </div>
+
+        <div class="text-center mb-4">
+          <p class="mb-1">Can't scan the QR code? Use this code instead:</p>
+          <code class="user-select-all">{{ secret }}</code>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.verify_2fa') }}">
+          <div class="mb-3">
+            <label for="token" class="form-label">Verification Code</label>
+            <input
+              type="text"
+              class="form-control text-center"
+              id="token"
+              name="token"
+              required
+              autocomplete="off"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
+            />
+            <div class="form-text">
+              Enter the 6-digit code from your authenticator app
+            </div>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+              Verify and Enable 2FA
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Auto-focus the token input
+    document.getElementById("token").focus();
+
+    // Auto-submit when 6 digits are entered
+    document.getElementById("token").addEventListener("input", function (e) {
+      if (e.target.value.length === 6) {
+        e.target.form.submit();
+      }
+    });
+  });
+</script>
+{% endblock %}

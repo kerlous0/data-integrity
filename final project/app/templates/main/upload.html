@@ -1,0 +1,73 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="mb-0">Upload Document</h4>
+      </div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="file" class="form-label">Select Document</label>
+            <input
+              type="file"
+              class="form-control"
+              id="file"
+              name="file"
+              required
+              accept=".pdf,.docx,.txt"
+            />
+            <small class="form-text text-muted">
+              Allowed file types: PDF, DOCX, TXT<br />
+              Maximum file size: 16MB
+            </small>
+          </div>
+
+          <div class="alert alert-info">
+            <h5><i class="fas fa-shield-alt"></i> Security Features</h5>
+            <ul class="mb-0">
+              <li>AES-256 encryption for secure storage</li>
+              <li>SHA-256 hashing for integrity verification</li>
+              <li>Digital signature for authenticity</li>
+              <li>HMAC verification on download</li>
+            </ul>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-upload"></i> Upload Document
+            </button>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> Back to Documents
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+<script>
+  document.getElementById("file").addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (16MB limit)
+      if (file.size > 16 * 1024 * 1024) {
+        alert("File size exceeds 16MB limit");
+        e.target.value = "";
+        return;
+      }
+
+      // Check file type
+      const allowedTypes = [".pdf", ".docx", ".txt"];
+      const ext = "." + file.name.split(".").pop().toLowerCase();
+      if (!allowedTypes.includes(ext)) {
+        alert("Invalid file type. Please upload PDF, DOCX, or TXT files only.");
+        e.target.value = "";
+        return;
+      }
+    }
+  });
+</script>
+{% endblock %}

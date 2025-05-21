@@ -5,7 +5,7 @@ const generate2FA = async (sec) => {
   const secret = sec
     ? {
         base32: sec,
-        otpauth_url: `otpauth://totp/MyApp?secret=${sec}`,
+        otpauth_url: `otpauth://totp/MyApp?secret=${sec}&issues=MyApp`,
       }
     : speakeasy.generateSecret({ name: "MyApp" });
 

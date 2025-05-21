@@ -1,0 +1,175 @@
+{% extends "base.html" %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="mb-0">Profile</h4>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Account Information</h5>
+            <dl class="row">
+              <dt class="col-sm-4">Username</dt>
+              <dd class="col-sm-8">{{ current_user.username }}</dd>
+
+              <dt class="col-sm-4">Email</dt>
+              <dd class="col-sm-8">{{ current_user.email }}</dd>
+
+              <dt class="col-sm-4">Role</dt>
+              <dd class="col-sm-8">
+                <span
+                  class="badge bg-{{ 'primary' if current_user.is_admin() else 'secondary' }}"
+                >
+                  {{ current_user.role.title() }}
+                </span>
+              </dd>
+
+              <dt class="col-sm-4">Member Since</dt>
+              <dd class="col-sm-8">
+                {{ current_user.created_at.strftime('%Y-%m-%d') if
+                current_user.created_at }}
+              </dd>
+
+              <dt class="col-sm-4">Last Login</dt>
+              <dd class="col-sm-8">
+                {% if current_user.last_login %} {{
+                current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') }} {% else
+                %} Never {% endif %}
+              </dd>
+            </dl>
+          </div>
+
+          <div class="col-md-6">
+            <h5>Security Settings</h5>
+            <div class="mb-3">
+              <h6>Two-Factor Authentication</h6>
+              <dl class="row mb-0">
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">
+                  {% if current_user.mfa_secret %}
+                  <span class="text-success">
+                    <i class="fas fa-shield-alt"></i> 2FA is enabled
+                  </span>
+                  {% else %}
+                  <span class="text-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 2FA is not
+                    enabled
+                    <a
+                      href="{{ url_for('auth.setup_2fa') }}"
+                      class="btn btn-sm btn-warning ms-2"
+                    >
+                      Enable 2FA
+                    </a>
+                  </span>
+                  {% endif %}
+                </dd>
+              </dl>
+            </div>
+
+            <div class="mb-3">
+              <h6>Document Statistics</h6>
+              <p>
+                Total Documents: {{ current_user.documents.count() if
+                current_user.documents else 0 }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <hr />
+
+        <div class="d-grid gap-2">
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#changePasswordModal"
+          >
+            <i class="fas fa-key"></i> Change Password
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Change Password</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ url_for('main.change_password') }}">
+          <div class="mb-3">
+            <label for="current_password" class="form-label"
+              >Current Password</label
+            >
+            <input
+              type="password"
+              class="form-control"
+              id="current_password"
+              name="current_password"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="new_password" class="form-label">New Password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="new_password"
+              name="new_password"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="confirm_password" class="form-label"
+              >Confirm New Password</label
+            >
+            <input
+              type="password"
+              class="form-control"
+              id="confirm_password"
+              name="confirm_password"
+              required
+            />
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">
+              Change Password
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+<script>
+  document
+    .getElementById("changePasswordModal")
+    .addEventListener("shown.bs.modal", function () {
+      document.getElementById("current_password").focus();
+    });
+
+  // Password confirmation validation
+  document.querySelector("form").addEventListener("submit", function (e) {
+    var newPassword = document.getElementById("new_password").value;
+    var confirmPassword = document.getElementById("confirm_password").value;
+
+    if (newPassword !== confirmPassword) {
+      e.preventDefault();
+      alert("New passwords do not match!");
+    }
+  });
+</script>
+{% endblock %}
