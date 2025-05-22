@@ -167,12 +167,30 @@ def register():
     return render_template('auth/register.html', title='Register', form=form)
 
 @bp.route('/setup-2fa')
-@login_required
 def setup_2fa():
-    # If user already has 2FA set up, redirect to index
-    if current_user.mfa_secret:
-        flash('Two-factor authentication is already set up.')
-        return redirect(url_for('main.index'))
+    # For OAuth users, check if they have user_id in session but aren't logged in yet
+    if not current_user.is_authenticated:
+        if 'user_id' not in session:
+            flash('Please log in to access this page.')
+            return redirect(url_for('auth.login'))
+        
+        # Get user from session for OAuth flow
+        user = User.query.get(session['user_id'])
+        if not user:
+            flash('Session expired. Please log in again.')
+            return redirect(url_for('auth.login'))
+        
+        # If user already has 2FA set up, redirect to 2FA verification
+        if user.mfa_secret:
+            return redirect(url_for('auth.two_factor'))
+    else:
+        # For authenticated users, use current_user
+        user = current_user
+        
+        # If user already has 2FA set up, redirect to index
+        if user.mfa_secret:
+            flash('Two-factor authentication is already set up.')
+            return redirect(url_for('main.index'))
     
     if 'mfa_secret' not in session:
         secret = generate_totp_secret()
@@ -180,11 +198,13 @@ def setup_2fa():
         print(f"////////////////////MFA secret: {secret}")
     else:
         secret = session['mfa_secret']
+        print(f"sddddddddddddddddddddddd/MFA secret: {secret}")
+
     
     # Generate QR code
     totp = pyotp.TOTP(secret)
     provisioning_uri = totp.provisioning_uri(
-        current_user.email,
+        user.email,
         issuer_name="SecureDocs"
     )
     
@@ -209,7 +229,6 @@ def setup_2fa():
                          qr_code=img_str)
 
 @bp.route('/verify-2fa', methods=['POST'])
-@login_required
 def verify_2fa():
     if 'mfa_secret' not in session:
         flash('2FA setup error. Please try again.')
@@ -222,12 +241,27 @@ def verify_2fa():
     
     secret = session['mfa_secret']
     if verify_totp(secret, token):
+        # Determine if user is authenticated or in OAuth flow
+        if current_user.is_authenticated:
+            # User is already authenticated (regular registration flow)
+            user = current_user
+        else:
+            # OAuth flow - get user from session
+            if 'user_id' not in session:
+                flash('Session expired. Please log in again.')
+                return redirect(url_for('auth.login'))
+            
+            user = User.query.get(session['user_id'])
+            if not user:
+                flash('Session expired. Please log in again.')
+                return redirect(url_for('auth.login'))
+        
         # Save the verified secret
-        current_user.mfa_secret = secret
+        user.mfa_secret = secret
         
         # Log successful 2FA setup
         log = AuditLog(
-            user_id=current_user.id,
+            user_id=user.id,
             action='2fa_setup',
             details='Two-factor authentication enabled',
             ip_address=request.remote_addr
@@ -238,24 +272,34 @@ def verify_2fa():
         # Clean up session
         session.pop('mfa_secret', None)
         
-        # If this was an OAuth login, complete the login process
+        # If user was not authenticated (OAuth flow), log them in now
+        if not current_user.is_authenticated:
+            login_user(user)
+            session.pop('user_id', None)
+        
+        # Clean up OAuth session flag
         if session.get('oauth_login'):
             session.pop('oauth_login', None)
-            flash('Two-factor authentication has been enabled successfully! You can now log in.')
-            return redirect(url_for('auth.login'))
         
         flash('Two-factor authentication has been enabled successfully!')
         return redirect(url_for('main.index'))
     
+    # Determine user for logging
+    if current_user.is_authenticated:
+        user_id = current_user.id
+    else:
+        user_id = session.get('user_id')
+    
     # Log failed 2FA setup attempt
-    log = AuditLog(
-        user_id=current_user.id,
-        action='2fa_setup_failed',
-        details='Invalid verification code during 2FA setup',
-        ip_address=request.remote_addr
-    )
-    db.session.add(log)
-    db.session.commit()
+    if user_id:
+        log = AuditLog(
+            user_id=user_id,
+            action='2fa_setup_failed',
+            details='Invalid verification code during 2FA setup',
+            ip_address=request.remote_addr
+        )
+        db.session.add(log)
+        db.session.commit()
     
     flash('Invalid verification code. Please try again.')
     return redirect(url_for('auth.setup_2fa'))
@@ -310,4 +354,4 @@ def change_password():
             for error in errors:
                 flash(f'{field}: {error}', 'error')
     
-    return redirect(url_for('auth.profile')) 
+    return redirect(url_for('auth.profile'))
