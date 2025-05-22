@@ -177,6 +177,7 @@ def setup_2fa():
     if 'mfa_secret' not in session:
         secret = generate_totp_secret()
         session['mfa_secret'] = secret
+        print(f"////////////////////MFA secret: {secret}")
     else:
         secret = session['mfa_secret']
     
